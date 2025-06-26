@@ -16,7 +16,7 @@ variable "frontend_sg_description" {
       default = "created sg for frontend instance"
 }
 
-variable "bation_sg_name" {
+variable "bastion_sg_name" {
       type = string
       default = "bastion"
 }
