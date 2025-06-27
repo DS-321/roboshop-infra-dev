@@ -163,14 +163,14 @@ resource "aws_security_group_rule" "mongodb_vpn_ssh" {
   security_group_id = module.mongodb.sg_id
 }
 
-# resource "aws_security_group_rule" "mongodb_vpn" {
-#   type              = "ingress"
-#   from_port         = 27017
-#   to_port           = 27017
-#   protocol          = "tcp"
-#   source_security_group_id = module.vpn.sg_id
-#   security_group_id = module.vpn.sg_id
-# }
+resource "aws_security_group_rule" "mongodb_vpn" {
+  type              = "ingress"
+  from_port         = 27017
+  to_port           = 27017
+  protocol          = "tcp"
+  source_security_group_id = module.vpn.sg_id
+  security_group_id = module.vpn.sg_id
+}
 
 resource "aws_security_group_rule" "redis_vpn_ssh" {
   count = length(var.redis_ports_vpn)
@@ -192,6 +192,7 @@ resource "aws_security_group_rule" "mysql_vpn_ssh" {
   security_group_id = module.mysql.sg_id
 }
 
+# opened as part of some jira-1234 from db team
 resource "aws_security_group_rule" "rabbitmq_vpn_ssh" {
   count = length(var.rabbitmq_ports_vpn)
   type              = "ingress"
