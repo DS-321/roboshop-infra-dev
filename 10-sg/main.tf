@@ -4,7 +4,7 @@ module "frontend" {
   project = var.project
   environment = var.environment
 
-  sg_name = var.frontend_sg_name
+  sg_name = "${var.project}-${var.environment}-${var.frontend_sg_name}"
   sg_description = var.frontend_sg_description
   vpc_id = local.vpc_id
 }
@@ -15,7 +15,7 @@ module "bastion" {
   project = var.project
   environment = var.environment
 
-  sg_name = var.bastion_sg_name
+  sg_name = "${var.project}-${var.environment}-${var.bastion_sg_name}"
   sg_description = var.bastion_sg_description
   vpc_id = local.vpc_id
 }
@@ -26,7 +26,7 @@ module "backend_alb" {
   project = var.project
   environment = var.environment
 
-  sg_name = "backend-alb"
+  sg_name = "${var.project}-${var.environment}-backend-alb"
   sg_description = "for backend-alb"
   vpc_id = local.vpc_id
 }
@@ -37,7 +37,7 @@ module "vpn" {
   project = var.project
   environment = var.environment
 
-  sg_name = "vpn"
+  sg_name = "${var.project}-${var.environment}-vpn"
   sg_description = "for vpn"
   vpc_id = local.vpc_id
 }
@@ -48,7 +48,7 @@ module "mongodb" {
   project = var.project
   environment = var.environment
 
-  sg_name = "mongodb"
+  sg_name = "${var.project}-${var.environment}-mongodb"
   sg_description = "for mongodb"
   vpc_id = local.vpc_id
 }
@@ -59,7 +59,7 @@ module "redis" {
   project = var.project
   environment = var.environment
 
-  sg_name = "redis"
+  sg_name = "${var.project}-${var.environment}-redis"
   sg_description = "for redis"
   vpc_id = local.vpc_id
 }
@@ -70,7 +70,7 @@ module "mysql" {
   project = var.project
   environment = var.environment
 
-  sg_name = "mysql"
+  sg_name = "${var.project}-${var.environment}-mysql"
   sg_description = "for mysql"
   vpc_id = local.vpc_id
 }
@@ -81,8 +81,19 @@ module "rabbitmq" {
   project = var.project
   environment = var.environment
 
-  sg_name = "rabbitmq"
+  sg_name = "${var.project}-${var.environment}-rabbitmq"
   sg_description = "for rabbitmq"
+  vpc_id = local.vpc_id
+}
+
+module "catalogue" {
+  #source = "../../terraform-aws-securitygroup"
+  source = "git::https://github.com/DS-321/terraform-aws-securitygroup.git?ref=main"
+  project = var.project
+  environment = var.environment
+
+  sg_name = "${var.project}-${var.environment}-catalogue"
+  sg_description = "for catalogue"
   vpc_id = local.vpc_id
 }
 
@@ -203,3 +214,47 @@ resource "aws_security_group_rule" "rabbitmq_vpn_ssh" {
   security_group_id = module.rabbitmq.sg_id
 }
 
+resource "aws_security_group_rule" "catalogue_backend_alb" {
+  type              = "ingress"
+  from_port         = 8080
+  to_port           = 8080
+  protocol          = "tcp"
+  source_security_group_id = module.backend_alb.sg_id
+  security_group_id = module.catalogue.sg_id
+}
+
+resource "aws_security_group_rule" "catalogue_vpn_ssh" {
+  type              = "ingress"
+  from_port         = 22
+  to_port           = 22
+  protocol          = "tcp"
+  source_security_group_id = module.vpn.sg_id
+  security_group_id = module.catalogue.sg_id
+}
+
+resource "aws_security_group_rule" "catalogue_vpn_http" {
+  type              = "ingress"
+  from_port         = 8080
+  to_port           = 8080
+  protocol          = "tcp"
+  source_security_group_id = module.vpn.sg_id
+  security_group_id = module.catalogue.sg_id
+}
+
+resource "aws_security_group_rule" "catalogue_bastion" {
+  type              = "ingress"
+  from_port         = 22
+  to_port           = 22
+  protocol          = "tcp"
+  source_security_group_id = module.bastion.sg_id
+  security_group_id = module.catalogue.sg_id
+}
+
+resource "aws_security_group_rule" "mongodb_catalogue" {
+  type              = "ingress"
+  from_port         = 27017
+  to_port           = 27017
+  protocol          = "tcp"
+  source_security_group_id = module.catalogue.sg_id
+  security_group_id = module.mongodb.sg_id
+}
